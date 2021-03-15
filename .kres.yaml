@@ -1,0 +1,4 @@
+kind: common.Repository
+spec:
+  conformLicenseCheck: false
+  enableLicense: false
