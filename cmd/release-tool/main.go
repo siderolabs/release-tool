@@ -59,12 +59,18 @@ type download struct {
 
 type projectChange struct {
 	Name    string
+	Since   string
 	Changes []change
 }
 
 type projectRename struct {
 	Old string `toml:"old"`
 	New string `toml:"new"`
+}
+
+type makeDependency struct {
+	Variable   string `toml:"variable"`
+	Repository string `toml:"repository"`
 }
 
 type release struct { //nolint: govet
@@ -78,9 +84,10 @@ type release struct { //nolint: govet
 	BreakingChanges map[string]change `toml:"breaking"`
 
 	// dependency options
-	MatchDeps  string                   `toml:"match_deps"`
-	RenameDeps map[string]projectRename `toml:"rename_deps"`
-	IgnoreDeps []string                 `toml:"ignore_deps"`
+	MatchDeps  string                    `toml:"match_deps"`
+	RenameDeps map[string]projectRename  `toml:"rename_deps"`
+	IgnoreDeps []string                  `toml:"ignore_deps"`
+	MakeDeps   map[string]makeDependency `toml:"make_deps"`
 
 	// generated fields
 	Changes      []projectChange
@@ -213,23 +220,55 @@ This tool should be ran from the root of the project repository for a new releas
 			}
 		}
 
-		if err = addContributors(r.Previous, r.Commit, contributors); err != nil {
-			return err
-		}
-
 		projectChanges = append(projectChanges, projectChange{
 			Name:    "",
 			Changes: changes,
 		})
 
-		logrus.Infof("creating new release %s with %d new changes...", tag, len(changes))
-
-		current, err := parseDependencies(r.Commit)
+		previousTag, err := getPreviousTag(tag)
 		if err != nil {
 			return err
 		}
 
-		previous, err := parseDependencies(r.Previous)
+		if previousTag != "" && previousTag != r.Previous {
+			var previousTagChanges []change
+
+			previousTagChanges, err = changelog(previousTag, r.Commit)
+			if err != nil {
+				return err
+			}
+
+			if linkify {
+				if err = linkifyChanges(previousTagChanges, githubCommitLink(r.GithubRepo), githubPRLink(r.GithubRepo)); err != nil {
+					return err
+				}
+			}
+
+			projectChanges = append(projectChanges, projectChange{
+				Name:    "",
+				Since:   previousTag,
+				Changes: previousTagChanges,
+			})
+		}
+
+		if err = addContributors(r.Previous, r.Commit, contributors); err != nil {
+			return err
+		}
+
+		logrus.Infof("creating new release %s with %d new changes...", tag, len(changes))
+
+		makeDeps := make([]makeDependency, 0, len(r.MakeDeps))
+
+		for _, makeDep := range r.MakeDeps {
+			makeDeps = append(makeDeps, makeDep)
+		}
+
+		current, err := parseDependencies(r.Commit, makeDeps)
+		if err != nil {
+			return err
+		}
+
+		previous, err := parseDependencies(r.Previous, makeDeps)
 		if err != nil {
 			return err
 		}

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -42,6 +43,7 @@ const (
 	vendorConf = "vendor.conf"
 	modulesTxt = "vendor/modules.txt"
 	goMod      = "go.mod"
+	makefile   = "Makefile"
 )
 
 var errUnknownFormat = errors.New("unknown file format")
@@ -63,7 +65,82 @@ func parseTag(path string) string {
 	return strings.TrimSuffix(filepath.Base(path), ".toml")
 }
 
-func parseDependencies(commit string) ([]dependency, error) {
+func parseDependencies(commit string, makeDeps []makeDependency) ([]dependency, error) {
+	goDeps, err := parseGoDependencies(commit)
+	if err != nil {
+		return nil, err
+	}
+
+	mkDeps, err := parseMakeDependencies(commit, makeDeps)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(goDeps, mkDeps...), nil
+}
+
+func parseMakeDependencies(commit string, makeDeps []makeDependency) ([]dependency, error) {
+	if len(makeDeps) == 0 {
+		return nil, nil
+	}
+
+	rd, err := fileFromRev(commit, makefile)
+	if err != nil {
+		return nil, fmt.Errorf("error finding Makefile: %w", err)
+	}
+
+	tmpf, err := ioutil.TempFile("", "Makefile*")
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		tmpf.Close()           //nolint: errcheck
+		os.Remove(tmpf.Name()) //nolint: errcheck
+	}()
+
+	_, err = io.Copy(tmpf, rd)
+	if err != nil {
+		return nil, err
+	}
+
+	deps := make([]dependency, 0, len(makeDeps))
+
+	for _, makeDep := range makeDeps {
+		out, err := execMake(fmt.Sprintf("--eval=pp:\n\t@echo $(%s)\n", makeDep.Variable), "-f", tmpf.Name(), "pp")
+		if err != nil {
+			return nil, err
+		}
+
+		value := strings.TrimSpace(string(out))
+		parts := strings.Split(value, ":")
+		value = parts[len(parts)-1]
+
+		dashFields := strings.FieldsFunc(value, func(c rune) bool { return c == '-' })
+
+		var dep dependency
+
+		switch len(dashFields) {
+		case 1:
+			dep = formatDependency(makeDep.Repository, value, false)
+		case 2:
+			dep = formatDependency(makeDep.Repository, value, false)
+		case 3, 4:
+			dep = formatDependency(makeDep.Repository, dashFields[len(dashFields)-1][1:], true)
+			dep.Ref = value
+		default:
+			return nil, fmt.Errorf("unparseable version for %v: %v", makeDep.Variable, value)
+		}
+
+		deps = append(deps, dep)
+	}
+
+	log.Printf("deps = %v", deps)
+
+	return deps, nil
+}
+
+func parseGoDependencies(commit string) ([]dependency, error) {
 	rd, err := fileFromRev(commit, vendorConf)
 	if err == nil {
 		return parseVendorConfDependencies(rd)
@@ -385,6 +462,22 @@ func parseChangelog(changelog []byte) ([]change, error) {
 	return changes, nil
 }
 
+func getPreviousTag(tag string) (string, error) {
+	dashFields := strings.FieldsFunc(tag, func(c rune) bool { return c == '-' })
+
+	o, err := git("tag", "-l", "--sort=creatordate", dashFields[0]+"*")
+	if err != nil {
+		return "", err
+	}
+
+	l := strings.Split(strings.TrimSpace(string(o)), "\n")
+	if len(l) == 0 {
+		return "", nil
+	}
+
+	return l[len(l)-1], nil
+}
+
 func getSha(gitURL, rev string, cache Cache) (string, error) {
 	key := fmt.Sprintf("git ls-remote %s %s %s^{}", gitURL, rev, rev)
 	if b, ok := cache.Get(key); ok {
@@ -460,6 +553,15 @@ func git(args ...string) ([]byte, error) {
 	gitArgs = append(gitArgs, args...)
 
 	o, err := exec.Command("git", gitArgs...).CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", err, o)
+	}
+
+	return o, nil
+}
+
+func execMake(args ...string) ([]byte, error) {
+	o, err := exec.Command("make", args...).CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", err, o)
 	}
