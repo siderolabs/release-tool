@@ -2,13 +2,11 @@
 
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2021-03-15T12:21:30Z by kres 93ce485-dirty.
+# Generated on 2021-03-16T12:38:21Z by kres 9ef6cfd-dirty.
 
 ARG TOOLCHAIN
 
-FROM ghcr.io/talos-systems/ca-certificates:v0.3.0-12-g90722c3 AS image-ca-certificates
-
-FROM ghcr.io/talos-systems/fhs:v0.3.0-12-g90722c3 AS image-fhs
+FROM alpine:3.13 AS base-image-release-tool
 
 # runs markdownlint
 FROM node:14.8.0-alpine AS lint-markdown
@@ -77,9 +75,8 @@ COPY --from=release-tool-build /release-tool /release-tool
 FROM scratch AS unit-tests
 COPY --from=unit-tests-run /src/coverage.txt /coverage.txt
 
-FROM scratch AS image-release-tool
+FROM base-image-release-tool AS image-release-tool
+RUN apk add --no-cache git git-lfs make
 COPY --from=release-tool / /
-COPY --from=image-fhs / /
-COPY --from=image-ca-certificates / /
 ENTRYPOINT ["/release-tool"]
 

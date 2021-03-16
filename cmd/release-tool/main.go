@@ -27,6 +27,7 @@ import (
 	"strings"
 	"text/tabwriter"
 	"text/template"
+	"time"
 	"unicode"
 
 	"github.com/pkg/errors"
@@ -82,6 +83,7 @@ type release struct { //nolint: govet
 	Preface         string            `toml:"preface"`
 	Notes           map[string]note   `toml:"notes"`
 	BreakingChanges map[string]change `toml:"breaking"`
+	ReleaseDate     string            `toml:"release_date"`
 
 	// dependency options
 	MatchDeps  string                    `toml:"match_deps"`
@@ -399,6 +401,10 @@ This tool should be ran from the root of the project repository for a new releas
 		r.Changes = projectChanges
 		r.Tag = tag
 		r.Version = version
+
+		if r.ReleaseDate == "" {
+			r.ReleaseDate = time.Now().UTC().Format("2006-01-02")
+		}
 
 		// Remove trailing new lines
 		r.Preface = strings.TrimRightFunc(r.Preface, unicode.IsSpace)
