@@ -18,7 +18,7 @@ package main
 
 const (
 	defaultTemplateFile = "TEMPLATE"
-	releaseNotes        = `{{.ProjectName}} {{.Version}}
+	releaseNotes        = `## [{{.ProjectName}} {{.Version}}](https://github.com/{{.GithubRepo}}/releases/tag/v{{.Version}}) ({{.ReleaseDate}})
 
 Welcome to the {{.Tag}} release of {{.ProjectName}}!
 {{- if .PreRelease }}  {{/* two spaces added for markdown newline*/}}
