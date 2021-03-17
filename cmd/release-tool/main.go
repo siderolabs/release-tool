@@ -232,7 +232,7 @@ This tool should be ran from the root of the project repository for a new releas
 			return err
 		}
 
-		if previousTag != "" && previousTag != r.Previous {
+		if previousTag != "" && previousTag != r.Previous && previousTag != r.Tag {
 			var previousTagChanges []change
 
 			previousTagChanges, err = changelog(previousTag, r.Commit)
