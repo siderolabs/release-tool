@@ -471,11 +471,15 @@ func getPreviousTag(tag string) (string, error) {
 	}
 
 	l := strings.Split(strings.TrimSpace(string(o)), "\n")
-	if len(l) == 0 {
-		return "", nil
+	for i := len(l) - 1; i >= 0; i-- {
+		if l[i] == tag {
+			continue
+		}
+
+		return l[i], nil
 	}
 
-	return l[len(l)-1], nil
+	return "", nil
 }
 
 func getSha(gitURL, rev string, cache Cache) (string, error) {
