@@ -464,8 +464,9 @@ func parseChangelog(changelog []byte) ([]change, error) {
 
 func getPreviousTag(tag string) (string, error) {
 	dashFields := strings.FieldsFunc(tag, func(c rune) bool { return c == '-' })
+	pointFields := strings.FieldsFunc(dashFields[0], func(c rune) bool { return c == '.' })
 
-	o, err := git("tag", "-l", "--sort=creatordate", dashFields[0]+"*")
+	o, err := git("tag", "-l", "--sort=creatordate", fmt.Sprintf("%s.%s.*", pointFields[0], pointFields[1]))
 	if err != nil {
 		return "", err
 	}
