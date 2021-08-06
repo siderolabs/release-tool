@@ -421,7 +421,7 @@ func getChangelog(previous, commit string) ([]byte, error) {
 	return git("log", "--oneline", gitChangeDiff(previous, commit))
 }
 
-func linkifyChanges(c []change, commit, msg func(change) (string, error)) error {
+func linkifyChanges(c []change, commit, msg func(change) (string, error), gfm bool) error {
 	for i := range c {
 		commitLink, err := commit(c[i])
 		if err != nil {
@@ -433,7 +433,12 @@ func linkifyChanges(c []change, commit, msg func(change) (string, error)) error 
 			return err
 		}
 
-		c[i].Commit = fmt.Sprintf("[`%s`](%s)", c[i].Commit, commitLink)
+		if !gfm {
+			c[i].Commit = fmt.Sprintf("[`%s`](%s)", c[i].Commit, commitLink)
+		} else {
+			c[i].Commit = commitLink
+		}
+
 		c[i].Description = description
 	}
 
@@ -775,8 +780,12 @@ func getTemplate(context *cli.Context) (string, error) {
 	return string(data), nil
 }
 
-func githubCommitLink(repo string) func(change) (string, error) {
+func githubCommitLink(repo string, gfm bool) func(change) (string, error) {
 	return func(c change) (string, error) {
+		if gfm {
+			return fmt.Sprintf("%s@%s", repo, c.Commit), nil
+		}
+
 		full, err := git("rev-parse", c.Commit)
 		if err != nil {
 			return "", err
