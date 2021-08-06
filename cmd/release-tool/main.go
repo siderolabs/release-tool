@@ -134,6 +134,11 @@ This tool should be ran from the root of the project repository for a new releas
 			Aliases: []string{"l"},
 			Usage:   "add links to changelog",
 		},
+		&cli.BoolFlag{
+			Name:    "gfm",
+			Aliases: []string{"g"},
+			Usage:   "use GitHub Flavored Markdown links",
+		},
 		&cli.StringFlag{
 			Name:    "cache",
 			Usage:   "cache directory for static remote resources",
@@ -145,6 +150,7 @@ This tool should be ran from the root of the project repository for a new releas
 			releasePath = context.Args().First()
 			tag         = context.String("tag")
 			linkify     = context.Bool("linkify")
+			gfm         = context.Bool("gfm")
 		)
 
 		if tag == "" {
@@ -217,7 +223,7 @@ This tool should be ran from the root of the project repository for a new releas
 		}
 
 		if linkify {
-			if err = linkifyChanges(changes, githubCommitLink(r.GithubRepo), githubPRLink(r.GithubRepo)); err != nil {
+			if err = linkifyChanges(changes, githubCommitLink(r.GithubRepo, gfm), githubPRLink(r.GithubRepo), gfm); err != nil {
 				return err
 			}
 		}
@@ -241,7 +247,7 @@ This tool should be ran from the root of the project repository for a new releas
 			}
 
 			if linkify {
-				if err = linkifyChanges(previousTagChanges, githubCommitLink(r.GithubRepo), githubPRLink(r.GithubRepo)); err != nil {
+				if err = linkifyChanges(previousTagChanges, githubCommitLink(r.GithubRepo, gfm), githubPRLink(r.GithubRepo), gfm); err != nil {
 					return err
 				}
 			}
@@ -378,7 +384,7 @@ This tool should be ran from the root of the project repository for a new releas
 					} else {
 						ghname := dep.Name[11:]
 
-						if err = linkifyChanges(changes, githubCommitLink(ghname), githubPRLink(ghname)); err != nil {
+						if err = linkifyChanges(changes, githubCommitLink(ghname, gfm), githubPRLink(ghname), gfm); err != nil {
 							return err
 						}
 					}
