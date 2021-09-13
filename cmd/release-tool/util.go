@@ -217,6 +217,10 @@ func parseGoModDependencies(r io.Reader) ([]dependency, error) {
 	replaceMap := make(map[string]*dependency)
 
 	for _, require := range goMod.Require {
+		if require.Indirect {
+			continue
+		}
+
 		commitOrVersion, isSha := getCommitOrVersion(require.Mod.Version)
 		if commitOrVersion == "" {
 			return nil, errors.Wrapf(errUnknownFormat, "poorly formatted version in require section %s", require.Mod)

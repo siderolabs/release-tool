@@ -1,0 +1,16 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2021-09-13T19:28:07Z by kres latest.
+
+
+# commit to be tagged for the new release
+commit = "HEAD"
+
+project_name = "release-tool"
+github_repo = "containerd/release-tool"
+match_deps = "^github.com/(containerd/[a-zA-Z0-9-]+)$"
+
+# previous = -
+# pre_release = true
+
+# [notes]

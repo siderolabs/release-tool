@@ -1,7 +1,7 @@
 ---
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2021-03-15T12:21:30Z by kres 93ce485-dirty.
+# Generated on 2021-09-13T19:28:07Z by kres latest.
 
 kind: pipeline
 type: kubernetes
@@ -216,9 +216,61 @@ steps:
   depends_on:
   - push-release-tool
 
+- name: release-notes
+  pull: always
+  image: autonomy/build-container:latest
+  commands:
+  - make release-notes
+  volumes:
+  - name: outer-docker-socket
+    path: /var/outer-run
+  - name: docker-socket
+    path: /var/run
+  - name: buildx
+    path: /root/.docker/buildx
+  - name: ssh
+    path: /root/.ssh
+  when:
+    event:
+    - tag
+  depends_on:
+  - unit-tests
+  - coverage
+  - release-tool
+  - image-release-tool
+  - lint
+
+- name: release
+  pull: always
+  image: plugins/github-release
+  settings:
+    api_key:
+      from_secret: github_token
+    checksum:
+    - sha256
+    - sha512
+    draft: true
+    files:
+    - _out/*
+    note: _out/RELEASE_NOTES.md
+  volumes:
+  - name: outer-docker-socket
+    path: /var/outer-run
+  - name: docker-socket
+    path: /var/run
+  - name: buildx
+    path: /root/.docker/buildx
+  - name: ssh
+    path: /root/.ssh
+  when:
+    event:
+    - tag
+  depends_on:
+  - release-notes
+
 services:
 - name: docker
-  image: docker:19.03-dind
+  image: docker:20.10-dind
   entrypoint:
   - dockerd
   commands:

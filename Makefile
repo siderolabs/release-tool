@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2021-03-15T12:21:30Z by kres 93ce485-dirty.
+# Generated on 2021-09-13T19:30:04Z by kres latest.
 
 # common variables
 
@@ -12,7 +12,10 @@ REGISTRY ?= ghcr.io
 USERNAME ?= talos-systems
 REGISTRY_AND_USERNAME ?= $(REGISTRY)/$(USERNAME)
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
-GO_VERSION ?= 1.14
+GO_VERSION ?= 1.17
+PROTOBUF_GO_VERSION ?= 1.25.0
+GRPC_GO_VERSION ?= 1.1.0
+GRPC_GATEWAY_VERSION ?= 2.4.0
 TESTPKGS ?= ./...
 KRES_IMAGE ?= ghcr.io/talos-systems/kres:latest
 
@@ -33,8 +36,11 @@ COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 COMMON_ARGS += --build-arg=TOOLCHAIN=$(TOOLCHAIN)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
+COMMON_ARGS += --build-arg=PROTOBUF_GO_VERSION=$(PROTOBUF_GO_VERSION)
+COMMON_ARGS += --build-arg=GRPC_GO_VERSION=$(GRPC_GO_VERSION)
+COMMON_ARGS += --build-arg=GRPC_GATEWAY_VERSION=$(GRPC_GATEWAY_VERSION)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
-TOOLCHAIN ?= docker.io/golang:1.16-alpine
+TOOLCHAIN ?= docker.io/golang:1.17-alpine
 
 # help menu
 
@@ -91,8 +97,8 @@ lint-gofumpt:  ## Runs gofumpt linter.
 fmt:  ## Formats the source code
 	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) \
 		bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; \
-		cd /tmp && go mod init tmp && go get mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && \
-		cd - && gofumports -w -local github.com/containerd/release-tool ."
+		go install mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && \
+		gofumports -w -local github.com/containerd/release-tool ."
 
 .PHONY: base
 base:  ## Prepare base toolchain
@@ -110,12 +116,15 @@ unit-tests-race:  ## Performs unit tests with race detection enabled.
 coverage:  ## Upload coverage data to codecov.io.
 	bash -c "bash <(curl -s https://codecov.io/bash) -f $(ARTIFACTS)/coverage.txt -X fix"
 
-.PHONY: $(ARTIFACTS)/release-tool
-$(ARTIFACTS)/release-tool:
-	@$(MAKE) local-release-tool DEST=$(ARTIFACTS)
+.PHONY: $(ARTIFACTS)/release-tool-linux-amd64
+$(ARTIFACTS)/release-tool-linux-amd64:
+	@$(MAKE) local-release-tool-linux-amd64 DEST=$(ARTIFACTS)
+
+.PHONY: release-tool-linux-amd64
+release-tool-linux-amd64: $(ARTIFACTS)/release-tool-linux-amd64  ## Builds executable for release-tool-linux-amd64.
 
 .PHONY: release-tool
-release-tool: $(ARTIFACTS)/release-tool  ## Builds executable for release-tool.
+release-tool: release-tool-linux-amd64  ## Builds executables for release-tool.
 
 .PHONY: lint-markdown
 lint-markdown:  ## Runs markdownlint.
@@ -137,4 +146,9 @@ rekres:
 help:  ## This help menu.
 	@echo "$$HELP_MENU_HEADER"
 	@grep -E '^[a-zA-Z%_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: release-notes
+release-notes:
+	mkdir -p $(ARTIFACTS)
+	@ARTIFACTS=$(ARTIFACTS) ./hack/release.sh $@ $(ARTIFACTS)/RELEASE_NOTES.md $(TAG)
 
