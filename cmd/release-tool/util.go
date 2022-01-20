@@ -338,7 +338,12 @@ func getGitURL(name string) string {
 	if idx := strings.Index(name, "/"); idx > 0 {
 		switch name[:idx] {
 		case "github.com":
-			return "https://" + name
+			parts := strings.Split(name, "/")
+			if len(parts) < 3 {
+				return ""
+			}
+
+			return "https://" + strings.Join(parts[0:3], "/")
 		case "k8s.io":
 			return "https://github.com/kubernetes" + name[idx:]
 		case "sigs.k8s.io":
@@ -499,6 +504,39 @@ func getPreviousTag(tag string) (string, error) {
 	return "", nil
 }
 
+func nextGitURLTry(url string) string {
+	var prefix string
+	if strings.HasPrefix(url, "https://") {
+		prefix = "https://"
+		url = url[8:]
+	}
+
+	parts := strings.Split(url, "/")
+	if len(parts) < 3 {
+		return ""
+	}
+
+	return prefix + strings.Join(parts[:len(parts)-1], "/")
+}
+
+func lsRemote(key, gitURL, rev string) []byte {
+	for gitURL != "" {
+		b, err := git("ls-remote", gitURL, rev, rev+"^{}")
+		if err != nil {
+			// strip next ending to handle Go submodules
+			gitURL = nextGitURLTry(gitURL)
+
+			if !strings.Contains(err.Error(), "not found") {
+				logrus.WithError(err).WithField("key", key).Debug("not using sha")
+			}
+		} else {
+			return b
+		}
+	}
+
+	return nil
+}
+
 func getSha(gitURL, rev string, cache Cache) (string, error) {
 	key := fmt.Sprintf("git ls-remote %s %s %s^{}", gitURL, rev, rev)
 	if b, ok := cache.Get(key); ok {
@@ -509,9 +547,8 @@ func getSha(gitURL, rev string, cache Cache) (string, error) {
 
 	logrus.WithField("cache", "miss").Debug(key)
 
-	b, err := git("ls-remote", gitURL, rev, rev+"^{}")
-	if err != nil {
-		logrus.WithError(err).WithField("key", key).Debug("not using sha")
+	b := lsRemote(key, gitURL, rev)
+	if b == nil {
 		// Not found, don't use sha
 		return "", nil
 	}
