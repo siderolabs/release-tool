@@ -2,7 +2,7 @@
 
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2021-09-13T19:30:04Z by kres latest.
+# Generated on 2022-03-23T19:45:28Z by kres latest.
 
 ARG TOOLCHAIN
 
@@ -84,6 +84,6 @@ FROM base-image-release-tool AS image-release-tool
 RUN apk add --no-cache git git-lfs make
 ARG TARGETARCH
 COPY --from=release-tool release-tool-linux-${TARGETARCH} /release-tool
-LABEL org.opencontainers.image.source https://github.com/talos-systems/release-tool
+LABEL org.opencontainers.image.source https://github.com/siderolabs/release-tool
 ENTRYPOINT ["/release-tool"]
 

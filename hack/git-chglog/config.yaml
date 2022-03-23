@@ -6,7 +6,7 @@ style: github
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://github.com/talos-systems/release-tool
+  repository_url: https://github.com/siderolabs/release-tool
 options:
   commits:
     # filters:

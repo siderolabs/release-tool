@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2021-09-13T19:30:04Z by kres latest.
+# Generated on 2022-03-23T19:45:28Z by kres latest.
 
 # common variables
 
@@ -9,15 +9,16 @@ TAG := $(shell git describe --tag --always --dirty)
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 ARTIFACTS := _out
 REGISTRY ?= ghcr.io
-USERNAME ?= talos-systems
+USERNAME ?= siderolabs
 REGISTRY_AND_USERNAME ?= $(REGISTRY)/$(USERNAME)
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
 GO_VERSION ?= 1.17
-PROTOBUF_GO_VERSION ?= 1.25.0
+PROTOBUF_GO_VERSION ?= 1.27.1
 GRPC_GO_VERSION ?= 1.1.0
 GRPC_GATEWAY_VERSION ?= 2.4.0
+VTPROTOBUF_VERSION ?= 81d623a9a700ede8ef765e5ab08b3aa1f5b4d5a8
 TESTPKGS ?= ./...
-KRES_IMAGE ?= ghcr.io/talos-systems/kres:latest
+KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 
 # docker build settings
 
@@ -39,6 +40,7 @@ COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
 COMMON_ARGS += --build-arg=PROTOBUF_GO_VERSION=$(PROTOBUF_GO_VERSION)
 COMMON_ARGS += --build-arg=GRPC_GO_VERSION=$(GRPC_GO_VERSION)
 COMMON_ARGS += --build-arg=GRPC_GATEWAY_VERSION=$(GRPC_GATEWAY_VERSION)
+COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
 TOOLCHAIN ?= docker.io/golang:1.17-alpine
 
