@@ -100,7 +100,7 @@ type release struct { //nolint: govet
 	Downloads    []download
 }
 
-//nolint: gocognit, gocyclo, cyclop
+//nolint: gocognit, gocyclo, cyclop, maintidx
 func main() {
 	app := cli.NewApp()
 	app.Name = "release"

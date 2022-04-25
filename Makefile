@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2022-03-23T19:45:28Z by kres latest.
+# Generated on 2022-04-25T14:05:08Z by kres 685be7b-dirty.
 
 # common variables
 
@@ -11,12 +11,13 @@ ARTIFACTS := _out
 REGISTRY ?= ghcr.io
 USERNAME ?= siderolabs
 REGISTRY_AND_USERNAME ?= $(REGISTRY)/$(USERNAME)
-GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
-GO_VERSION ?= 1.17
-PROTOBUF_GO_VERSION ?= 1.27.1
-GRPC_GO_VERSION ?= 1.1.0
-GRPC_GATEWAY_VERSION ?= 2.4.0
-VTPROTOBUF_VERSION ?= 81d623a9a700ede8ef765e5ab08b3aa1f5b4d5a8
+GOFUMPT_VERSION ?= v0.3.1
+GO_VERSION ?= 1.18
+GOIMPORTS_VERSION ?= v0.1.10
+PROTOBUF_GO_VERSION ?= 1.28.0
+GRPC_GO_VERSION ?= 1.2.0
+GRPC_GATEWAY_VERSION ?= 2.10.0
+VTPROTOBUF_VERSION ?= 0.3.0
 TESTPKGS ?= ./...
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 
@@ -37,12 +38,13 @@ COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 COMMON_ARGS += --build-arg=TOOLCHAIN=$(TOOLCHAIN)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
+COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
 COMMON_ARGS += --build-arg=PROTOBUF_GO_VERSION=$(PROTOBUF_GO_VERSION)
 COMMON_ARGS += --build-arg=GRPC_GO_VERSION=$(GRPC_GO_VERSION)
 COMMON_ARGS += --build-arg=GRPC_GATEWAY_VERSION=$(GRPC_GATEWAY_VERSION)
 COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
-TOOLCHAIN ?= docker.io/golang:1.17-alpine
+TOOLCHAIN ?= docker.io/golang:1.18-alpine
 
 # help menu
 
@@ -99,8 +101,11 @@ lint-gofumpt:  ## Runs gofumpt linter.
 fmt:  ## Formats the source code
 	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) \
 		bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; \
-		go install mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && \
-		gofumports -w -local github.com/containerd/release-tool ."
+		go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && \
+		gofumpt -w ."
+
+lint-goimports:  ## Runs goimports linter.
+	@$(MAKE) target-$@
 
 .PHONY: base
 base:  ## Prepare base toolchain
@@ -133,7 +138,7 @@ lint-markdown:  ## Runs markdownlint.
 	@$(MAKE) target-$@
 
 .PHONY: lint
-lint: lint-golangci-lint lint-gofumpt lint-markdown  ## Run all linters for the project.
+lint: lint-golangci-lint lint-gofumpt lint-goimports lint-markdown  ## Run all linters for the project.
 
 .PHONY: image-release-tool
 image-release-tool:  ## Builds image for release-tool.

@@ -156,7 +156,7 @@ func parseGoDependencies(commit string) ([]dependency, error) {
 		return parseGoModDependencies(rd)
 	}
 
-	return nil, errors.Errorf("finding dependency file failed: %v", err)
+	return nil, nil
 }
 
 func parseModulesTxtDependencies(r io.Reader) ([]dependency, error) {
@@ -422,6 +422,14 @@ func gitChangeDiff(previous, commit string) string {
 }
 
 func getChangelog(previous, commit string) ([]byte, error) {
+	// add current directory as 'safe' to git, as otherwise git complains about different user owning the repo files
+	// when run via `docker run -v`
+	if cwd, err := os.Getwd(); err == nil {
+		if _, err := git("config", "--global", "--add", "safe.directory", cwd); err != nil {
+			return nil, err
+		}
+	}
+
 	return git("log", "--oneline", gitChangeDiff(previous, commit))
 }
 
