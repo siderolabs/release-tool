@@ -14,12 +14,13 @@
    limitations under the License.
 */
 
+// Package main provides the release tool.
 package main
 
 import (
 	"encoding/base32"
 	"hash/fnv"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -44,13 +45,13 @@ type dirCache struct {
 }
 
 func (dc *dirCache) Get(key string) ([]byte, bool) {
-	b, err := ioutil.ReadFile(dc.path(key))
+	b, err := os.ReadFile(dc.path(key))
 
 	return b, err == nil
 }
 
 func (dc *dirCache) Put(key string, value []byte) error {
-	return ioutil.WriteFile(dc.path(key), value, 0o755)
+	return os.WriteFile(dc.path(key), value, 0o755)
 }
 
 func (dc *dirCache) path(key string) string {

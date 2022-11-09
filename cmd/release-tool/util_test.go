@@ -14,7 +14,6 @@
    limitations under the License.
 */
 
-//nolint: testpackage
 package main
 
 import "testing"

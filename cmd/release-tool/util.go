@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -89,7 +88,7 @@ func parseMakeDependencies(commit string, makeDeps []makeDependency) ([]dependen
 		return nil, fmt.Errorf("error finding Makefile: %w", err)
 	}
 
-	tmpf, err := ioutil.TempFile("", "Makefile*")
+	tmpf, err := os.CreateTemp("", "Makefile*")
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +202,7 @@ func parseModulesTxtDependencies(r io.Reader) ([]dependency, error) {
 func parseGoModDependencies(r io.Reader) ([]dependency, error) {
 	var err error
 
-	contents, err := ioutil.ReadAll(r)
+	contents, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
@@ -617,7 +616,7 @@ func renameDependencies(deps []dependency, renames map[string]projectRename) {
 	}
 }
 
-//nolint: gocognit
+//nolint:gocognit
 func getUpdatedDeps(previous, deps []dependency, ignored []string, cache Cache) ([]dependency, error) {
 	var updated []dependency
 
@@ -784,7 +783,7 @@ func getTemplate(context *cli.Context) (string, error) {
 
 	defer f.Close() //nolint: errcheck
 
-	data, err := ioutil.ReadAll(f)
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return "", err
 	}
@@ -841,7 +840,7 @@ func resolveGitURL(name string, cache Cache) (string, error) {
 
 	defer resp.Body.Close() //nolint: errcheck
 
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode >= http.StatusBadRequest {
 		return "", errors.Errorf("unexpected status code %d for %s", resp.StatusCode, u)
 	}
 

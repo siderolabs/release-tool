@@ -1,7 +1,7 @@
 ---
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2021-09-13T19:28:07Z by kres latest.
+# Generated on 2022-11-09T18:27:07Z by kres 03328da.
 
 kind: pipeline
 type: kubernetes
@@ -209,7 +209,7 @@ steps:
     path: /root/.ssh
   when:
     branch:
-    - master
+    - main
     event:
       exclude:
       - pull_request
@@ -303,6 +303,12 @@ volumes:
   temp:
     medium: memory
 
+trigger:
+  branch:
+    exclude:
+    - renovate/*
+    - dependabot/*
+
 ---
 kind: pipeline
 type: kubernetes
@@ -330,6 +336,10 @@ steps:
     - failure
 
 trigger:
+  branch:
+    exclude:
+    - renovate/*
+    - dependabot/*
   status:
   - success
   - failure

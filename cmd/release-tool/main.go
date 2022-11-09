@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -100,7 +99,7 @@ type release struct { //nolint: govet
 	Downloads    []download
 }
 
-//nolint: gocognit, gocyclo, cyclop, maintidx
+//nolint:gocognit,gocyclo,cyclop,maintidx
 func main() {
 	app := cli.NewApp()
 	app.Name = "release"
@@ -303,7 +302,7 @@ This tool should be ran from the root of the project repository for a new releas
 			if gitRoot == "" {
 				var td string
 
-				td, err = ioutil.TempDir("", "tmp-clone-")
+				td, err = os.MkdirTemp("", "tmp-clone-")
 				if err != nil {
 					return errors.Wrap(err, "unable to create temp clone directory")
 				}
