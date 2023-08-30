@@ -19,6 +19,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -31,7 +32,6 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/mod/modfile"
@@ -185,12 +185,12 @@ func parseModulesTxtDependencies(r io.Reader) ([]dependency, error) {
 		} else if len(parts) == 6 && parts[3] == "=>" {
 			commitOrVersionPart = parts[5]
 		} else {
-			return nil, errors.Wrapf(errUnknownFormat, "%s", ln)
+			return nil, fmt.Errorf("%w: %s", errUnknownFormat, ln)
 		}
 
 		commitOrVersion, isSha := getCommitOrVersion(commitOrVersionPart)
 		if commitOrVersion == "" {
-			return nil, errors.Wrapf(errUnknownFormat, "poorly formatted version in replace section %s", parts[2])
+			return nil, fmt.Errorf("%w: poorly formatted version in replace section %s", errUnknownFormat, parts[2])
 		}
 
 		dependencies = append(dependencies, formatDependency(parts[1], commitOrVersion, isSha))
@@ -222,7 +222,7 @@ func parseGoModDependencies(r io.Reader) ([]dependency, error) {
 
 		commitOrVersion, isSha := getCommitOrVersion(require.Mod.Version)
 		if commitOrVersion == "" {
-			return nil, errors.Wrapf(errUnknownFormat, "poorly formatted version in require section %s", require.Mod)
+			return nil, fmt.Errorf("%w: poorly formatted version in require section %s", errUnknownFormat, require.Mod)
 		}
 
 		dep := formatDependency(require.Mod.Path, commitOrVersion, isSha)
@@ -236,7 +236,7 @@ func parseGoModDependencies(r io.Reader) ([]dependency, error) {
 
 		commitOrVersion, isSha := getCommitOrVersion(replace.New.Version)
 		if commitOrVersion == "" {
-			return nil, errors.Wrapf(errUnknownFormat, "poorly formatted version in replace section %s", replace.New)
+			return nil, fmt.Errorf("%w: poorly formatted version in replace section %s", errUnknownFormat, replace.New)
 		}
 
 		dep := formatDependency(replace.New.Path, commitOrVersion, isSha)
@@ -388,7 +388,7 @@ func parseVendorConfDependencies(r io.Reader) ([]dependency, error) {
 
 		var sha string
 
-		if matched := re.Match([]byte(commitOrVersion)); matched {
+		if matched := re.MatchString(commitOrVersion); matched {
 			commitOrVersion = commitOrVersion[:12]
 			sha = commitOrVersion
 		}
@@ -682,7 +682,7 @@ func getUpdatedDeps(previous, deps []dependency, ignored []string, cache Cache) 
 				if d.GitURL == "" {
 					gitURL, err := resolveGitURL(name, cache)
 					if err != nil {
-						return nil, errors.Wrapf(err, "git url for %q", name)
+						return nil, fmt.Errorf("git url for %s: %w", name, err)
 					}
 
 					d.GitURL = gitURL
@@ -694,7 +694,7 @@ func getUpdatedDeps(previous, deps []dependency, ignored []string, cache Cache) 
 
 				sha, err := getSha(d.GitURL, d.Ref, cache)
 				if err != nil {
-					return nil, errors.Wrapf(err, "failed to get sha for %q", name)
+					return nil, fmt.Errorf("failed to get sha for %s: %w", name, err)
 				}
 
 				d.Sha = sha
@@ -704,7 +704,7 @@ func getUpdatedDeps(previous, deps []dependency, ignored []string, cache Cache) 
 				if c.GitURL == "" {
 					gitURL, err := resolveGitURL(name, cache)
 					if err != nil {
-						return nil, errors.Wrapf(err, "git url for %q", name)
+						return nil, fmt.Errorf("git url for %s: %w", name, err)
 					}
 
 					c.GitURL = gitURL
@@ -712,7 +712,7 @@ func getUpdatedDeps(previous, deps []dependency, ignored []string, cache Cache) 
 
 				sha, err := getSha(c.GitURL, c.Ref, cache)
 				if err != nil {
-					return nil, errors.Wrapf(err, "failed to get sha for %q", name)
+					return nil, fmt.Errorf("failed to get sha for %s: %w", name, err)
 				}
 
 				c.Sha = sha
@@ -755,7 +755,7 @@ func addContributors(previous, commit string, contributors map[contributor]int) 
 	for s.Scan() {
 		p := strings.SplitN(s.Text(), " ", 2)
 		if len(p) != 2 {
-			return errors.Errorf("invalid author line: %q", s.Text())
+			return fmt.Errorf("invalid author line: %q", s.Text())
 		}
 
 		c := contributor{
@@ -878,7 +878,7 @@ func resolveGitURL(name string, cache Cache) (string, error) {
 	defer resp.Body.Close() //nolint: errcheck
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		return "", errors.Errorf("unexpected status code %d for %s", resp.StatusCode, u)
+		return "", fmt.Errorf("unexpected status code %d for %s", resp.StatusCode, u)
 	}
 
 	t := html.NewTokenizer(resp.Body)
