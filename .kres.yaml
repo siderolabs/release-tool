@@ -1,12 +1,16 @@
 kind: common.Repository
 spec:
   conformLicenseCheck: false
-  enableLicense: false
+  licenses: []
 ---
 kind: common.Image
 name: image-release-tool
 spec:
-  baseImage: alpine:3.13
+  baseImage: alpine:3.20
   additionalImages: []
   customCommands:
-    - apk add --no-cache git git-lfs make
+    - apk add --no-cache git git-lfs make sed
+---
+kind: service.CodeCov
+spec:
+  enabled: false

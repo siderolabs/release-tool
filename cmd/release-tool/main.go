@@ -173,7 +173,6 @@ This tool should be ran from the root of the project repository for a new releas
 			var err error
 
 			cd, err = filepath.Abs(cd)
-
 			if err != nil {
 				return err
 			}
@@ -184,12 +183,15 @@ This tool should be ran from the root of the project repository for a new releas
 
 			gitRoot = filepath.Join(cd, "git")
 			cacheRoot := filepath.Join(cd, "object")
+
 			if err = os.MkdirAll(gitRoot, 0o755); err != nil {
 				return fmt.Errorf("unable to mkdir %s: %w", gitRoot, err)
 			}
+
 			if err = os.MkdirAll(cacheRoot, 0o755); err != nil {
 				return fmt.Errorf("unable to mkdir: %s: %w", cacheRoot, err)
 			}
+
 			cache = &dirCache{
 				root: cacheRoot,
 			}
