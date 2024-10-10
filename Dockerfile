@@ -1,8 +1,8 @@
-# syntax = docker/dockerfile-upstream:1.9.0-labs
+# syntax = docker/dockerfile-upstream:1.10.0-labs
 
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-08-13T10:22:57Z by kres 2ab5924.
+# Generated on 2024-10-10T13:37:23Z by kres 34e72ac.
 
 ARG TOOLCHAIN
 
@@ -12,7 +12,7 @@ FROM alpine:3.20 AS base-image-release-tool
 FROM scratch AS generate
 
 # runs markdownlint
-FROM docker.io/oven/bun:1.1.22-alpine AS lint-markdown
+FROM docker.io/oven/bun:1.1.29-alpine AS lint-markdown
 WORKDIR /src
 RUN bun i markdownlint-cli@0.41.0 sentences-per-line@0.2.1
 COPY .markdownlint.json .

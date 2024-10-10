@@ -1,3 +1,10 @@
+---
+kind: common.Image
+name: image-release-tool
+spec:
+  extraEnvironment:
+    PLATFORM: linux/amd64,linux/arm64
+---
 kind: common.Repository
 spec:
   conformLicenseCheck: false
