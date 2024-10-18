@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-10-10T13:37:23Z by kres 34e72ac.
+# Generated on 2024-10-18T12:33:47Z by kres 34e72ac.
 
 # common variables
 
@@ -182,8 +182,15 @@ $(ARTIFACTS)/release-tool-linux-amd64:
 .PHONY: release-tool-linux-amd64
 release-tool-linux-amd64: $(ARTIFACTS)/release-tool-linux-amd64  ## Builds executable for release-tool-linux-amd64.
 
+.PHONY: $(ARTIFACTS)/release-tool-linux-arm64
+$(ARTIFACTS)/release-tool-linux-arm64:
+	@$(MAKE) local-release-tool-linux-arm64 DEST=$(ARTIFACTS)
+
+.PHONY: release-tool-linux-arm64
+release-tool-linux-arm64: $(ARTIFACTS)/release-tool-linux-arm64  ## Builds executable for release-tool-linux-arm64.
+
 .PHONY: release-tool
-release-tool: release-tool-linux-amd64  ## Builds executables for release-tool.
+release-tool: release-tool-linux-amd64 release-tool-linux-arm64  ## Builds executables for release-tool.
 
 .PHONY: lint-markdown
 lint-markdown:  ## Runs markdownlint.

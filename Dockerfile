@@ -2,7 +2,7 @@
 
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-10-10T13:37:23Z by kres 34e72ac.
+# Generated on 2024-10-18T12:33:47Z by kres 34e72ac.
 
 ARG TOOLCHAIN
 
@@ -79,7 +79,15 @@ COPY --from=generate / /
 WORKDIR /src/cmd/release-tool
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /release-tool-linux-amd64
+RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg GOARCH=amd64 GOOS=linux go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /release-tool-linux-amd64
+
+# builds release-tool-linux-arm64
+FROM base AS release-tool-linux-arm64-build
+COPY --from=generate / /
+WORKDIR /src/cmd/release-tool
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg GOARCH=arm64 GOOS=linux go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /release-tool-linux-arm64
 
 # runs unit-tests with race detector
 FROM base AS unit-tests-race
@@ -96,6 +104,9 @@ RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/g
 FROM scratch AS release-tool-linux-amd64
 COPY --from=release-tool-linux-amd64-build /release-tool-linux-amd64 /release-tool-linux-amd64
 
+FROM scratch AS release-tool-linux-arm64
+COPY --from=release-tool-linux-arm64-build /release-tool-linux-arm64 /release-tool-linux-arm64
+
 FROM scratch AS unit-tests
 COPY --from=unit-tests-run /src/coverage.txt /coverage-unit-tests.txt
 
@@ -103,6 +114,7 @@ FROM release-tool-linux-${TARGETARCH} AS release-tool
 
 FROM scratch AS release-tool-all
 COPY --from=release-tool-linux-amd64 / /
+COPY --from=release-tool-linux-arm64 / /
 
 FROM base-image-release-tool AS image-release-tool
 RUN apk add --no-cache git git-lfs make sed
